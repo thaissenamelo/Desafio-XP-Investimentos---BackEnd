@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
-const db = require("../config/database");
+const sequelize = require("../config/database");
 
-const Carteira = db.define('Carteira', {
+const Carteira = sequelize.define('Carteira', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -10,10 +10,6 @@ const Carteira = db.define('Carteira', {
   id_cliente: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'Clientes',
-      key: 'id'
-    }
   },
   id_ativo: {
     type: DataTypes.INTEGER,
@@ -25,7 +21,6 @@ const Carteira = db.define('Carteira', {
     defaultValue: 0.00000000,
   }
 }, {
-  sequelize: db,
   tableName: 'Carteiras',
   timestamps: true,
 });

@@ -1,18 +1,16 @@
 const express = require("express");
-// const reviewRoutes = require("./routes/review.routes");
-// const movieRoutes = require("./routes/movie.routes");
-// const userRoutes = require("./routes/user.routes");
+const clientRoutes = require("./routes/client.routes");
+const ativoRoutes = require("./routes/ativo.routes");
+const carteiraRoutes = require("./routes/carteira.routes");
 const db = require("./models");
-const investimentosRoutes = require("./routes/investimentosRoutes");
 
 const app = express();
 
 app.use(express.json());
-app.use(investimentosRoutes);
 
-// app.use("/reviews", reviewRoutes);
-// app.use("/movie", movieRoutes);
-// app.use("/users", userRoutes);
+app.use("/client", clientRoutes);
+app.use("/ativo", ativoRoutes);
+app.use("/carteira", carteiraRoutes);
 
 async function startServer() {
   try {
@@ -30,4 +28,3 @@ async function startServer() {
 }
 
 startServer();
-

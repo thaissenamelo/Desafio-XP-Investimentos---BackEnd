@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
-const db = require("../config/database");
+const sequelize = require("../config/database");
 
-const Ativo = db.define('Ativo', {
+const Ativo = sequelize.define('Ativo', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -23,7 +23,6 @@ const Ativo = db.define('Ativo', {
     defaultValue: 0.00,
   }
 }, {
-  sequelize: db,
   tableName: 'Ativos',
   timestamps: false,
 });

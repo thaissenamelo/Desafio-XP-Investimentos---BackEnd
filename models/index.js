@@ -2,22 +2,24 @@
 
 const Sequelize = require("sequelize");
 const sequelize = require("../config/database");
-// const Review = require("./review.model");
-// const Movie = require("./movie.model");
-// const User = require("./user.model");
+
+const Cliente = require("./clientes");
+const Ativo = require("./ativos");
+const Carteira = require("./carteira");
 
 const db = {
   sequelize,
   Sequelize,
-  // Review,
-  // Movie,
-  // User,
+  Cliente,
+  Ativo,
+  Carteira
 };
 
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
-});
+// 🔥 RELACIONAMENTOS (ESSENCIAL)
+Carteira.belongsTo(Cliente, { foreignKey: 'id_cliente' });
+Carteira.belongsTo(Ativo, { foreignKey: 'id_ativo' });
+
+Cliente.hasMany(Carteira, { foreignKey: 'id_cliente' });
+Ativo.hasMany(Carteira, { foreignKey: 'id_ativo' });
 
 module.exports = db;

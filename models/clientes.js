@@ -1,8 +1,7 @@
 const { DataTypes } = require("sequelize");
-const Sequelize = require("../config/database");
+const sequelize = require("../config/database");
 
-
-const client = Sequelize.define({
+const Cliente = sequelize.define('Cliente', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -26,9 +25,8 @@ const client = Sequelize.define({
     defaultValue: 0.00,
   },
 }, {
-  sequelize: db,
-  tableName: 'Clientes', // Nome EXATO da tabela no seu Workbench
+  tableName: 'Clientes',
   timestamps: false,
 });
 
-module.exports = client;
+module.exports = Cliente;
