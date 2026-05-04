@@ -6,12 +6,15 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   CircleDollarSign,
+  Pencil,
   Loader2,
   Plus,
   RefreshCw,
+  Save,
   Search,
   Shield,
   TrendingUp,
+  X,
   UserPlus,
   Wallet,
 } from "lucide-react";
@@ -58,6 +61,10 @@ function App() {
   const [busyAction, setBusyAction] = useState("");
   const [notice, setNotice] = useState({ type: "", message: "" });
   const [filter, setFilter] = useState("");
+  const [editingAtivoId, setEditingAtivoId] = useState(null);
+  const [editAtivoForm, setEditAtivoForm] = useState(emptyForms.ativo);
+  const [editingSaldoClientId, setEditingSaldoClientId] = useState(null);
+  const [editSaldoValue, setEditSaldoValue] = useState("");
 
   const loadBase = async () => {
     setLoading(true);
@@ -157,6 +164,68 @@ function App() {
     });
   };
 
+  const startEditingAtivo = (ativo) => {
+    setEditingAtivoId(ativo.id);
+    setEditAtivoForm({
+      sigla_ativo: ativo.sigla_ativo,
+      quantidade_corretora: ativo.quantidade_corretora,
+      valor_unitario: ativo.valor_unitario,
+    });
+  };
+
+  const cancelEditingAtivo = () => {
+    setEditingAtivoId(null);
+    setEditAtivoForm(emptyForms.ativo);
+  };
+
+  const updateEditAtivo = (field, value) => {
+    setEditAtivoForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const submitEditAtivo = async (event, ativoId) => {
+    event.preventDefault();
+    await runAction(`editar-ativo-${ativoId}`, async () => {
+      await request(`/ativo/${ativoId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          sigla_ativo: editAtivoForm.sigla_ativo.toUpperCase(),
+          quantidade_corretora: Number(editAtivoForm.quantidade_corretora),
+          valor_unitario: Number(editAtivoForm.valor_unitario),
+        }),
+      });
+      cancelEditingAtivo();
+      setNotice({ type: "success", message: "Ativo atualizado com sucesso." });
+      await loadBase();
+    });
+  };
+
+  const startEditingSaldo = () => {
+    if (!selectedClientData) return;
+    setEditingSaldoClientId(selectedClientData.id);
+    setEditSaldoValue(carteira?.saldoEmConta ?? selectedClientData.saldo ?? "");
+  };
+
+  const cancelEditingSaldo = () => {
+    setEditingSaldoClientId(null);
+    setEditSaldoValue("");
+  };
+
+  const submitEditSaldo = async (event) => {
+    event.preventDefault();
+    if (!editingSaldoClientId) return;
+
+    await runAction("saldo", async () => {
+      await request(`/client/${editingSaldoClientId}`, {
+        method: "PUT",
+        body: JSON.stringify({ saldo: Number(editSaldoValue || 0) }),
+      });
+      cancelEditingSaldo();
+      setNotice({ type: "success", message: "Saldo do investidor atualizado." });
+      await loadBase();
+      await loadCarteira(editingSaldoClientId, false);
+    });
+  };
+
   const submitOrdem = async (event) => {
     event.preventDefault();
     const endpoint =
@@ -250,10 +319,59 @@ function App() {
 
             <div className="mb-5 grid gap-3 sm:grid-cols-2">
               <MiniStat label="Cliente" value={carteira?.cliente || selectedClientData?.nome || "-"} />
-              <MiniStat
-                label="Saldo em conta"
-                value={currency.format(Number(carteira?.saldoEmConta ?? selectedClientData?.saldo ?? 0))}
-              />
+              <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+                {editingSaldoClientId ? (
+                  <form className="grid gap-3" onSubmit={submitEditSaldo}>
+                    <label className="field">
+                      <span>Saldo em conta</span>
+                      <input
+                        required
+                        min="0"
+                        step="0.01"
+                        type="number"
+                        value={editSaldoValue}
+                        onChange={(event) => setEditSaldoValue(event.target.value)}
+                      />
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={cancelEditingSaldo}
+                        disabled={busyAction === "saldo"}
+                      >
+                        <X size={17} />
+                        Cancelar
+                      </button>
+                      <button className="action-button" type="submit" disabled={busyAction === "saldo"}>
+                        {busyAction === "saldo" ? <Loader2 className="animate-spin" size={17} /> : <Save size={17} />}
+                        Salvar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.12em] text-white/40">Saldo em conta</p>
+                        <strong className="mt-2 block text-base text-white">
+                          {currency.format(Number(carteira?.saldoEmConta ?? selectedClientData?.saldo ?? 0))}
+                        </strong>
+                      </div>
+                      <button
+                        className="icon-button"
+                        type="button"
+                        aria-label="Editar saldo do investidor"
+                        title="Editar saldo do investidor"
+                        onClick={startEditingSaldo}
+                        disabled={!selectedClientData}
+                      >
+                        <Pencil size={17} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="overflow-hidden rounded-lg border border-white/10">
@@ -413,15 +531,87 @@ function App() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {filteredAtivos.map((ativo) => (
               <article key={ativo.id} className="rounded-lg border border-white/10 bg-black/35 p-4 shadow-glow">
-                <div className="mb-4 flex items-center justify-between">
-                  <strong className="text-lg text-white">{ativo.sigla_ativo}</strong>
-                  <CircleDollarSign className="text-sky-300" size={22} />
-                </div>
-                <p className="text-sm text-white/50">Preco unitario</p>
-                <p className="mt-1 text-xl font-bold text-white">{currency.format(Number(ativo.valor_unitario))}</p>
-                <div className="mt-4 rounded-md bg-navy/80 px-3 py-2 text-sm text-white/70">
-                  {number.format(Number(ativo.quantidade_corretora))} disponiveis
-                </div>
+                {editingAtivoId === ativo.id ? (
+                  <form className="grid gap-3" onSubmit={(event) => submitEditAtivo(event, ativo.id)}>
+                    <label className="field">
+                      <span>Sigla</span>
+                      <input
+                        required
+                        maxLength="10"
+                        value={editAtivoForm.sigla_ativo}
+                        onChange={(event) => updateEditAtivo("sigla_ativo", event.target.value)}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Quantidade</span>
+                      <input
+                        required
+                        min="0"
+                        step="0.01"
+                        type="number"
+                        value={editAtivoForm.quantidade_corretora}
+                        onChange={(event) => updateEditAtivo("quantidade_corretora", event.target.value)}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Valor unitario</span>
+                      <input
+                        required
+                        min="0"
+                        step="0.01"
+                        type="number"
+                        value={editAtivoForm.valor_unitario}
+                        onChange={(event) => updateEditAtivo("valor_unitario", event.target.value)}
+                      />
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={cancelEditingAtivo}
+                        disabled={busyAction === `editar-ativo-${ativo.id}`}
+                      >
+                        <X size={17} />
+                        Cancelar
+                      </button>
+                      <button
+                        className="action-button"
+                        type="submit"
+                        disabled={busyAction === `editar-ativo-${ativo.id}`}
+                      >
+                        {busyAction === `editar-ativo-${ativo.id}` ? (
+                          <Loader2 className="animate-spin" size={17} />
+                        ) : (
+                          <Save size={17} />
+                        )}
+                        Salvar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <strong className="text-lg text-white">{ativo.sigla_ativo}</strong>
+                      <button
+                        className="icon-button"
+                        type="button"
+                        aria-label={`Editar ${ativo.sigla_ativo}`}
+                        title={`Editar ${ativo.sigla_ativo}`}
+                        onClick={() => startEditingAtivo(ativo)}
+                      >
+                        <Pencil size={17} />
+                      </button>
+                    </div>
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-cobalt/20 text-sky-200">
+                      <CircleDollarSign size={22} />
+                    </div>
+                    <p className="text-sm text-white/50">Preco unitario</p>
+                    <p className="mt-1 text-xl font-bold text-white">{currency.format(Number(ativo.valor_unitario))}</p>
+                    <div className="mt-4 rounded-md bg-navy/80 px-3 py-2 text-sm text-white/70">
+                      {number.format(Number(ativo.quantidade_corretora))} disponiveis
+                    </div>
+                  </>
+                )}
               </article>
             ))}
           </div>
