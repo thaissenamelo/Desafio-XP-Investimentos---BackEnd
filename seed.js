@@ -30,13 +30,13 @@ async function seed() {
     // 2. Criar Ativos
     await Ativo.create({
       sigla_ativo: "PETR4",
-      qtd_corretora: 500,
+      quantidade_corretora: 500,
       valor_unitario: 35.50
     });
 
     await Ativo.create({
       sigla_ativo: "VALE3",
-      qtd_corretora: 300,
+      quantidade_corretora: 300,
       valor_unitario: 70.20
     });
 

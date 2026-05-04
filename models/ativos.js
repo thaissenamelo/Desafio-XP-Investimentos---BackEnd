@@ -13,14 +13,14 @@ const Ativo = db.define('Ativo', {
     unique: true,
   },
   quantidade_corretora: {
-    type: DataTypes.DECIMAL(18, 8),
+    type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    defaultValue: 0.00000000,
+    
   },
   valor_unitario: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    defaultValue: 0.00,
+    
   }
 }, {
   sequelize: db,

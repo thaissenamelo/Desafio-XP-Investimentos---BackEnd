@@ -20,7 +20,7 @@ const Client = db.define('Client', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-  saldo: {
+  saldo : {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0.00,
   },
